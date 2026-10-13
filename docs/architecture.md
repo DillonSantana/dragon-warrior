@@ -1,8 +1,8 @@
 # Architecture
 
-Jarvis is a pipeline that runs on the Mac:
+RollOut is a pipeline that runs on the Mac:
 
-1. **Wake word** (`voice/wake.py`): openWakeWord listens for "Hey Jarvis".
+1. **Wake word** (`voice/wake.py`): openWakeWord listens for the wake word (a custom RollOut phrase, trained in Phase 2).
 2. **End of speech** (`voice/listen.py`): Silero VAD records until you stop talking.
 3. **Speech to text** (`voice/stt.py`): mlx-whisper transcribes on device.
 4. **Router** (`brain/router.py`): sends the request to the local model, or to Claude only when enabled.

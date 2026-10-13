@@ -1,1 +1,1 @@
-Helper scripts. Planned: `install_launchd.sh` to start Jarvis at login (Phase 2).
+Helper scripts. Planned: `install_launchd.sh` to start RollOut at login (Phase 2).
