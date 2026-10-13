@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-Jarvis (dragon-warrior): a free, local, voice-activated assistant for macOS on Apple Silicon.
+RollOut: a free, local, voice-activated assistant for macOS on Apple Silicon.
 
 ## Conventions
 
-- Python 3.11+, managed with uv. Source in `src/dragon_warrior/`, tests in `tests/`.
+- Python 3.11+, managed with uv. Source in `src/rollout/`, tests in `tests/`.
 - Run `uv run ruff check . && uv run ruff format --check . && uv run pytest` before every commit.
-- Must stay free to run: no paid APIs or services as defaults. Claude is optional and off unless `JARVIS_CLAUDE_ENABLED=1`.
+- Must stay free to run: no paid APIs or services as defaults. Claude is optional and off unless `ROLLOUT_CLAUDE_ENABLED=1`.
 - Never commit secrets or personal data: Google tokens, the D2L calendar feed link, `.env`, databases.
 - Sending email or deleting anything always requires spoken confirmation.
 

@@ -1,13 +1,13 @@
-# dragon-warrior
+# RollOut
 
-Jarvis, a voice-activated daily assistant that runs entirely on a Mac. Say "Hey Jarvis" to ask about your schedule, tasks, email and school assignments. Everything runs locally and costs nothing to use: speech recognition, the language model and your data all stay on the machine.
+RollOut is a voice-activated daily assistant that runs entirely on a Mac. Say the wake word to ask about your schedule, tasks, email and school assignments. Everything runs locally and costs nothing to use: speech recognition, the language model and your data all stay on the machine.
 
 > Status: Phase 0 (project setup). See the [roadmap](#roadmap).
 
 ## How it works
 
 ```
-"Hey Jarvis" -> wake word -> end of speech -> speech to text
+wake word -> end of speech -> speech to text
     -> router -> local model (Ollama) -> MCP tool servers -> answer -> text to speech
 ```
 
@@ -28,11 +28,11 @@ More detail in [docs/architecture.md](docs/architecture.md).
 Requires macOS on Apple Silicon, [uv](https://docs.astral.sh/uv/) and [Ollama](https://ollama.com).
 
 ```sh
-git clone https://github.com/DillonSantana/dragon-warrior
-cd dragon-warrior
+git clone https://github.com/DillonSantana/rollout
+cd rollout
 uv sync
 ollama pull qwen3:8b
-uv run jarvis
+uv run rollout
 ```
 
 Run the checks:
