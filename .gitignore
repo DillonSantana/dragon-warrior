@@ -218,3 +218,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- dragon-warrior ---
+# Secrets and personal data: never commit these to a public repo
+credentials.json
+token.json
+*.ics
+calendar_feed.txt
+
+# Downloaded models (wake word, Whisper): large and re-downloadable
+models/
+
+# Local databases (tasks, cache, outbox)
+*.db
+*.sqlite3
+
+# macOS
+.DS_Store
