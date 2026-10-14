@@ -28,8 +28,8 @@ More detail in [docs/architecture.md](docs/architecture.md).
 Requires macOS on Apple Silicon, [uv](https://docs.astral.sh/uv/) and [Ollama](https://ollama.com).
 
 ```sh
-git clone https://github.com/DillonSantana/rollout
-cd rollout
+git clone https://github.com/DillonSantana/roll-out
+cd roll-out
 uv sync
 ollama pull qwen3:8b
 uv run rollout
