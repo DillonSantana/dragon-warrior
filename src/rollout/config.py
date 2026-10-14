@@ -19,6 +19,14 @@ def load_dotenv(path: Path) -> None:
         os.environ.setdefault(key.strip(), value.strip().strip("'\""))
 
 
+# Drop your own emblem here (git-ignored) to use it without editing .env
+DEFAULT_OVERLAY_IMAGE = PROJECT_ROOT / "insignia.png"
+
+
+def _default_overlay_image() -> Path | None:
+    return DEFAULT_OVERLAY_IMAGE if DEFAULT_OVERLAY_IMAGE.is_file() else None
+
+
 def _default_data_dir() -> Path:
     return Path.home() / "Library" / "Application Support" / "rollout"
 
@@ -82,7 +90,7 @@ class Config:
             overlay_position=os.environ.get("ROLLOUT_OVERLAY_POSITION", defaults.overlay_position),
             overlay_image=Path(img).expanduser()
             if (img := os.environ.get("ROLLOUT_OVERLAY_IMAGE"))
-            else None,
+            else _default_overlay_image(),
             claude_enabled=os.environ.get("ROLLOUT_CLAUDE_ENABLED", "0") == "1",
             data_dir=Path(os.environ.get("ROLLOUT_DATA_DIR", defaults.data_dir)),
         )
