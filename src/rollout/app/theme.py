@@ -13,6 +13,7 @@ from collections.abc import Callable
 
 FADE_STEPS = 8
 LAUNCH_WAIT_S = 15
+SEEK_WAIT_S = 4
 NOT_ALLOWED = "-1743"  # macOS refused to let RollOut control Spotify
 
 Runner = Callable[[str], str]
@@ -30,6 +31,13 @@ def parse_start(text: str) -> float:
     for part in text.strip().split(":"):
         seconds = seconds * 60 + float(part)
     return seconds
+
+
+def _seconds(text: str) -> float:
+    try:
+        return float(text.replace(",", "."))  # some regions write 48,5
+    except ValueError:
+        return 0.0
 
 
 def osascript(script: str) -> str:
@@ -77,16 +85,26 @@ class Theme:
                 print("(Theme: skipped because Spotify is already playing)", flush=True)
                 return False
             self.volume = self.run('tell application "Spotify" to sound volume as string')
-            self.run(
-                f'tell application "Spotify"\n'
-                f'  play track "{self.uri}"\n'
-                f"  delay 0.3\n"
-                f"  set player position to {self.start_s}\n"
-                f"end tell"
-            )
+            self.run(f'tell application "Spotify" to play track "{self.uri}"')
+            self._seek()
             self.playing = True
-            print("(Theme: playing)", flush=True)
+            print(f"(Theme: playing from {self.start_s:g} seconds)", flush=True)
             return True
+
+    def _seek(self) -> None:
+        """Jump to the start point once Spotify has loaded the song; it ignores earlier jumps."""
+        if self.start_s <= 0:
+            return
+        deadline = time.monotonic() + SEEK_WAIT_S
+        while time.monotonic() < deadline:
+            if self.run('tell application "Spotify" to id of current track') == self.uri:
+                self.run(f'tell application "Spotify" to set player position to {self.start_s}')
+                if _seconds(self.run('tell application "Spotify" to player position')) >= (
+                    self.start_s - 1
+                ):
+                    return
+            time.sleep(0.25)
+        print("(Theme: Spotify didn't jump to the start point in time)", flush=True)
 
     def _launch(self) -> bool:
         """Open Spotify in the background and wait until it can take commands."""
