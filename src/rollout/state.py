@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 
 @dataclass
 class AssistantState:
-    status: str = "starting"  # starting, listening, thinking, speaking, paused, error
+    # starting, listening, awake (heard "Hey Prime"), thinking, speaking, paused, error
+    status: str = "starting"
+    caption: str = ""  # what the on-screen emblem shows under it
     paused: threading.Event = field(default_factory=threading.Event)
     stopped: threading.Event = field(default_factory=threading.Event)

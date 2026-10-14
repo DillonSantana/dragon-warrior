@@ -46,6 +46,11 @@ class Config:
     elevenlabs_api_key: str | None = field(default=None, repr=False)
     elevenlabs_voice_id: str | None = None
     elevenlabs_model: str = "eleven_flash_v2_5"
+    # Emblem that appears on screen when you say "Hey Prime" (menu bar app only).
+    # overlay_image swaps in your own picture, ideally a square PNG with a transparent background.
+    overlay: bool = True
+    overlay_position: str = "bottom"  # bottom, center or top-right
+    overlay_image: Path | None = None
     claude_enabled: bool = False
     data_dir: Path = field(default_factory=_default_data_dir)
 
@@ -73,6 +78,11 @@ class Config:
             elevenlabs_api_key=os.environ.get("ELEVENLABS_API_KEY") or None,
             elevenlabs_voice_id=os.environ.get("ROLLOUT_ELEVENLABS_VOICE_ID") or None,
             elevenlabs_model=os.environ.get("ROLLOUT_ELEVENLABS_MODEL", defaults.elevenlabs_model),
+            overlay=os.environ.get("ROLLOUT_OVERLAY", "1") != "0",
+            overlay_position=os.environ.get("ROLLOUT_OVERLAY_POSITION", defaults.overlay_position),
+            overlay_image=Path(img).expanduser()
+            if (img := os.environ.get("ROLLOUT_OVERLAY_IMAGE"))
+            else None,
             claude_enabled=os.environ.get("ROLLOUT_CLAUDE_ENABLED", "0") == "1",
             data_dir=Path(os.environ.get("ROLLOUT_DATA_DIR", defaults.data_dir)),
         )

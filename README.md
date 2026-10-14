@@ -56,6 +56,8 @@ To have RollOut start every time you log in and wait in the menu bar for "Hey Pr
 
 A "Prime" item appears in the menu bar: ● listening, ⋯ thinking, ♪ speaking, ‖ paused. Its menu can pause listening or quit. If it crashes, macOS restarts it. Logs go to `~/Library/Logs/rollout.log`. To remove it, run `./scripts/install_login_item.sh --remove`.
 
+When you say "Hey Prime", a glowing crest fades in near the bottom of your screen, like Siri. It shows what you asked and RollOut's answer, spins while RollOut thinks, pulses while it talks, and fades away when it's done. It never takes clicks or focus. To use your own picture instead of the built-in crest, set `ROLLOUT_OVERLAY_IMAGE` in `.env` to a square PNG with a transparent background. `ROLLOUT_OVERLAY_POSITION` can be `bottom`, `center` or `top-right`, and `ROLLOUT_OVERLAY=0` turns it off. Restart RollOut from its menu after changing `.env`.
+
 Run `uv run rollout` from Terminal once first so macOS asks for microphone access and the models download. Keep the Ollama app set to open at login too.
 
 ## Voice
