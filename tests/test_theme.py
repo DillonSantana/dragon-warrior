@@ -19,12 +19,32 @@ def test_parse_start():
 
 
 class FakeSpotify:
-    def __init__(self, running="true", state="paused"):
+    """Answers like Spotify, which only takes a jump once the new song has loaded."""
+
+    def __init__(self, running="true", state="paused", load_after=0):
         self.answers = {"is running": running, "player state": state, "sound volume as": "70"}
         self.scripts = []
+        self.track = "spotify:track:old"
+        self.position = "0"
+        self.load_after = load_after  # how many "current track" checks before it loads
 
     def __call__(self, script):
         self.scripts.append(script)
+        if "play track" in script:
+            self.pending = script.split('"')[3]
+            return ""
+        if "id of current track" in script:
+            if self.load_after == 0:
+                self.track = getattr(self, "pending", self.track)
+            else:
+                self.load_after -= 1
+            return self.track
+        if "set player position to" in script:
+            if self.track == getattr(self, "pending", None):
+                self.position = script.rsplit(" ", 1)[1].replace(".", ",")
+            return ""
+        if "to player position" in script:
+            return self.position
         for key, answer in self.answers.items():
             if key in script:
                 return answer
@@ -37,7 +57,7 @@ def test_plays_track_from_start_point_and_restores_volume(monkeypatch):
     theme = Theme(TRACK, 83, run=spotify)
     assert theme.play()
     assert any('play track "spotify:track:4uLU6hMCjMI75M1A2tKUQC"' in s for s in spotify.scripts)
-    assert any("set player position to 83" in s for s in spotify.scripts)
+    assert spotify.position.startswith("83")
     theme.stop()
     assert spotify.scripts[-2].endswith("to pause")
     assert spotify.scripts[-1].endswith("set sound volume to 70")
@@ -127,3 +147,10 @@ def test_theme_pauses_before_rollout_speaks(monkeypatch):
     state = app_main.AssistantState()
     app_main.respond("hello", FakeLLM(), Config(), state, FakeTheme())
     assert events == ["play", "think", "stop", "speak"]
+
+
+def test_waits_for_song_to_load_before_jumping(monkeypatch):
+    monkeypatch.setattr(theme_module.time, "sleep", lambda s: None)
+    spotify = FakeSpotify(load_after=3)
+    assert Theme(TRACK, 48, run=spotify).play()
+    assert spotify.position.startswith("48")
