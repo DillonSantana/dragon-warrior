@@ -17,9 +17,10 @@ from rollout.state import AssistantState
 from rollout.voice.listen import record_until_enter
 from rollout.voice.stt import Transcriber
 from rollout.voice.tts import speak
-from rollout.voice.wake import Microphone, match_wake
+from rollout.voice.wake import Microphone, is_exit, match_wake
 
 FOLLOW_UP_TIMEOUT_S = 8
+SIGN_OFF = "Rolling out."
 CHIME = "/System/Library/Sounds/Tink.aiff"
 
 
@@ -102,10 +103,30 @@ def run_wake_word(
                 mic.flush()
                 follow_up = mic.next_utterance(timeout_s=FOLLOW_UP_TIMEOUT_S)
                 command = stt.transcribe(follow_up) if follow_up is not None else ""
-            if command.strip():
-                respond(command, llm, config, state, theme)
+            converse(command, mic, llm, stt, config, state, theme)
             state.status = "listening"
             mic.flush()
+
+
+def converse(command, mic, llm, stt, config, state, theme) -> None:
+    """Answer, then keep answering follow-ups until "Roll out" or a quiet spell."""
+    first = True
+    while command.strip() and not state.stopped.is_set():
+        if is_exit(command, config.exit_phrases):
+            state.caption = SIGN_OFF
+            state.status = "speaking"
+            speak(SIGN_OFF, config)
+            return
+        # The theme plays once per conversation, not before every follow-up
+        respond(command, llm, config, state, theme if first else None)
+        first = False
+        if not config.conversation:
+            return
+        state.caption = "Listening…"
+        state.status = "awake"
+        mic.flush()
+        follow_up = mic.next_utterance(timeout_s=config.conversation_timeout_s)
+        command = stt.transcribe(follow_up) if follow_up is not None else ""
 
 
 def main(argv: list[str] | None = None) -> None:

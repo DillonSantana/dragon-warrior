@@ -97,6 +97,21 @@ def match_wake(text: str, phrases: Iterable[str]) -> str | None:
     return None
 
 
+def is_exit(text: str, phrases: Iterable[str]) -> bool:
+    """True when the utterance is just an exit phrase like "Roll out", give or take a word."""
+    words = _normalize(text)
+    joined = "".join(words)
+    for phrase in phrases:
+        target = _normalize(phrase)
+        if len(words) > len(target) + 2:
+            continue
+        if any(words[i : i + len(target)] == target for i in range(len(words))):
+            return True
+        if "".join(target) in joined and len(words) <= 2:  # "rollout" heard as one word
+            return True
+    return False
+
+
 class Microphone:
     """An always-on microphone stream that yields utterances."""
 

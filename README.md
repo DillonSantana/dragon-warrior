@@ -35,7 +35,7 @@ ollama pull qwen3:8b
 uv run rollout
 ```
 
-Say "Hey Prime" and your question in one breath ("Hey Prime, what's the capital of Peru?"), or say "Hey Prime", wait for the chime, then ask. To press Enter to talk instead, set `ROLLOUT_LISTEN_MODE=push`. The first run downloads the Whisper models (about 1.8 GB). macOS will ask for microphone access for your terminal app.
+Say "Hey Prime" and your question in one breath ("Hey Prime, what's the capital of Peru?"), or say "Hey Prime", wait for the chime, then ask. After it answers, keep talking without saying "Hey Prime" again: RollOut listens for follow-ups until you say "Roll out" or stay quiet for 10 seconds, then waits for "Hey Prime". Set `ROLLOUT_CONVERSATION=0` for one question per "Hey Prime", `ROLLOUT_CONVERSATION_TIMEOUT` to change the quiet time, or `ROLLOUT_EXIT_PHRASES` (comma-separated) for other exit phrases. To press Enter to talk instead, set `ROLLOUT_LISTEN_MODE=push`. The first run downloads the Whisper models (about 1.8 GB). macOS will ask for microphone access for your terminal app.
 
 Settings are environment variables, for example `ROLLOUT_OLLAMA_MODEL=qwen3:4b` on a Mac with 8 GB of memory, or `ROLLOUT_TTS_VOICE=Daniel` for a different `say` voice.
 
