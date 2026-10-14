@@ -60,11 +60,23 @@ def osascript(script: str) -> str:
     return result.stdout.strip()
 
 
+def open_spotify_hidden() -> None:
+    """Start Spotify hidden in the background, so its window never pops up."""
+    subprocess.run(["open", "-g", "-j", "-a", "Spotify"], check=False)
+
+
 class Theme:
-    def __init__(self, link: str, start_s: float = 0.0, run: Runner = osascript):
+    def __init__(
+        self,
+        link: str,
+        start_s: float = 0.0,
+        run: Runner = osascript,
+        open_hidden: Callable[[], None] = open_spotify_hidden,
+    ):
         self.uri = track_uri(link)
         self.start_s = start_s
         self.run = run
+        self.open_hidden = open_hidden
         self.playing = False  # only ever pause music RollOut started
         self.volume: str | None = None
         self.lock = threading.Lock()
@@ -108,7 +120,7 @@ class Theme:
 
     def _launch(self) -> bool:
         """Open Spotify in the background and wait until it can take commands."""
-        self.run('tell application "Spotify" to launch')
+        self.open_hidden()
         deadline = time.monotonic() + LAUNCH_WAIT_S
         while time.monotonic() < deadline:
             if self.run('tell application "Spotify" to player state as string'):
