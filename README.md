@@ -2,12 +2,12 @@
 
 RollOut is a voice-activated daily assistant that runs entirely on a Mac. Say "Hey Prime" to ask about your schedule, tasks, email and school assignments. Everything runs locally and costs nothing to use: speech recognition, the language model and your data all stay on the machine.
 
-> Status: Phase 1 (push-to-talk voice loop). See the [roadmap](#roadmap).
+> Status: Phase 2 (hands-free "Hey Prime"). See the [roadmap](#roadmap).
 
 ## How it works
 
 ```
-wake word -> end of speech -> speech to text
+"Hey Prime" -> end of speech -> speech to text
     -> router -> local model (Ollama) -> MCP tool servers -> answer -> text to speech
 ```
 
@@ -35,7 +35,7 @@ ollama pull qwen3:8b
 uv run rollout
 ```
 
-For now RollOut is push-to-talk in the terminal: press Enter, speak, then press Enter again. The first run downloads the Whisper model (about 1.6 GB). macOS will ask for microphone access for your terminal app.
+Say "Hey Prime" and your question in one breath ("Hey Prime, what's the capital of Peru?"), or say "Hey Prime", wait for the chime, then ask. To press Enter to talk instead, set `ROLLOUT_LISTEN_MODE=push`. The first run downloads the Whisper models (about 1.8 GB). macOS will ask for microphone access for your terminal app.
 
 Settings are environment variables, for example `ROLLOUT_OLLAMA_MODEL=qwen3:4b` on a Mac with 8 GB of memory, or `ROLLOUT_TTS_VOICE=Daniel` for a different `say` voice.
 

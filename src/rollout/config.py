@@ -11,8 +11,12 @@ def _default_data_dir() -> Path:
 
 @dataclass(frozen=True)
 class Config:
-    # Wake phrase "Hey Prime" arrives in Phase 2; until then this is openWakeWord's pretrained model
-    wake_word: str = "hey_jarvis"
+    # "wake" listens hands-free for a wake phrase; "push" is press Enter to talk
+    listen_mode: str = "wake"
+    # Whisper often hears "Hey Prime" as one of these
+    wake_phrases: tuple[str, ...] = ("hey prime", "hi prime", "hay prime", "a prime", "hey primes")
+    # Small, fast model that checks every utterance for the wake phrase
+    wake_model: str = "mlx-community/whisper-base.en-mlx"
     ollama_model: str = "qwen3:8b"
     ollama_url: str = "http://localhost:11434"
     whisper_model: str = "mlx-community/whisper-large-v3-turbo"
@@ -31,7 +35,13 @@ class Config:
     def from_env(cls) -> "Config":
         defaults = cls()
         return cls(
-            wake_word=os.environ.get("ROLLOUT_WAKE_WORD", defaults.wake_word),
+            listen_mode=os.environ.get("ROLLOUT_LISTEN_MODE", defaults.listen_mode),
+            wake_phrases=tuple(
+                p.strip() for p in os.environ["ROLLOUT_WAKE_PHRASES"].split(",") if p.strip()
+            )
+            if os.environ.get("ROLLOUT_WAKE_PHRASES")
+            else defaults.wake_phrases,
+            wake_model=os.environ.get("ROLLOUT_WAKE_MODEL", defaults.wake_model),
             ollama_model=os.environ.get("ROLLOUT_OLLAMA_MODEL", defaults.ollama_model),
             ollama_url=os.environ.get("ROLLOUT_OLLAMA_URL", defaults.ollama_url),
             whisper_model=os.environ.get("ROLLOUT_WHISPER_MODEL", defaults.whisper_model),

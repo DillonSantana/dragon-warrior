@@ -16,5 +16,5 @@ Claude builds everything; Dillon uses RollOut day to day and reviews pull reques
 
 ## Voice
 
-- Wake phrase: "Hey Prime" (custom openWakeWord model, Phase 2).
-- A custom cloned voice may be configured locally from a reference clip Dillon supplies. Never commit voice clips, cloned voice models, or anything derived from a real person's voice.
+- Wake phrase: "Hey Prime", spotted by a small Whisper model on each utterance (`voice/wake.py`).
+- The custom voice style clones only a clip the user has the right to use. Don't source or clone a real person's voice without their consent, and never commit voice clips or cloned voice models.
