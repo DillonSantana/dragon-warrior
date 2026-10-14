@@ -12,7 +12,15 @@ def test_version_is_set():
 def test_config_defaults_are_free_and_local():
     config = Config()
     assert config.claude_enabled is False
+    assert config.tts_style == "prime"
+    assert config.listen_mode == "wake"
+    assert "hey prime" in config.wake_phrases
     assert config.ollama_url.startswith("http://localhost")
+
+
+def test_wake_phrases_from_environment(monkeypatch):
+    monkeypatch.setenv("ROLLOUT_WAKE_PHRASES", "Hey Prime, optimus ,")
+    assert Config.from_env().wake_phrases == ("Hey Prime", "optimus")
 
 
 def test_config_reads_environment(monkeypatch, tmp_path):
@@ -25,6 +33,11 @@ def test_config_reads_environment(monkeypatch, tmp_path):
     assert config.data_dir == Path(tmp_path)
 
 
-def test_main_runs(capsys):
+def test_main_exits_cleanly_on_ctrl_c(monkeypatch, capsys):
+    def interrupt(prompt=""):
+        raise KeyboardInterrupt
+
+    monkeypatch.setenv("ROLLOUT_LISTEN_MODE", "push")
+    monkeypatch.setattr("builtins.input", interrupt)
     main()
     assert "RollOut" in capsys.readouterr().out

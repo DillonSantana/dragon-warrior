@@ -235,3 +235,6 @@ models/
 
 # macOS
 .DS_Store
+
+# Custom voice reference clips and cloned voice models: personal, never public
+voices/

@@ -2,11 +2,11 @@
 
 RollOut is a pipeline that runs on the Mac:
 
-1. **Wake word** (`voice/wake.py`): openWakeWord listens for the wake word (a custom RollOut phrase, trained in Phase 2).
-2. **End of speech** (`voice/listen.py`): Silero VAD records until you stop talking.
+1. **Listening** (`voice/wake.py`): the mic stays on, and an energy-based voice detector with an adaptive noise floor cuts the stream into utterances when you pause.
+2. **Wake phrase** (`voice/wake.py`): a small Whisper model (`whisper-base.en`) transcribes each utterance and checks it for "Hey Prime". Any phrase works without training. If the phrase comes with a question, the accurate model re-transcribes it; if not, RollOut chimes and waits for the question. Push-to-talk (`voice/listen.py`) is still available with `ROLLOUT_LISTEN_MODE=push`.
 3. **Speech to text** (`voice/stt.py`): mlx-whisper transcribes on device.
 4. **Router** (`brain/router.py`): sends the request to the local model, or to Claude only when enabled.
-5. **Agent loop** (`brain/agent.py`): the model calls MCP tool servers until it has an answer.
+5. **Local model** (`brain/local_llm.py`): Qwen3 in Ollama answers, keeping the last few turns as context. Phase 3 adds the agent loop (`brain/agent.py`) so it can call MCP tool servers.
 6. **Text to speech** (`voice/tts.py`): `say` or Piper speaks the answer.
 
 ## Tool servers (`servers/`)
