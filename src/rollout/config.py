@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from rollout.app.theme import parse_start
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -59,6 +61,12 @@ class Config:
     overlay: bool = True
     overlay_position: str = "bottom"  # bottom, center or top-right
     overlay_image: Path | None = None
+    # Theme song from the Spotify app: a share link or spotify:track: URI, and where to start
+    theme_track: str | None = None
+    theme_start: float = 0.0
+    # When it plays: "wake" (each "Hey Prime", paused before RollOut talks), "open" or "both"
+    theme_on: str = "both"
+    theme_open_seconds: float = 20.0
     claude_enabled: bool = False
     data_dir: Path = field(default_factory=_default_data_dir)
 
@@ -91,6 +99,12 @@ class Config:
             overlay_image=Path(img).expanduser()
             if (img := os.environ.get("ROLLOUT_OVERLAY_IMAGE"))
             else _default_overlay_image(),
+            theme_track=os.environ.get("ROLLOUT_THEME_TRACK") or None,
+            theme_start=parse_start(os.environ.get("ROLLOUT_THEME_START") or "0"),
+            theme_on=os.environ.get("ROLLOUT_THEME_ON", defaults.theme_on),
+            theme_open_seconds=float(
+                os.environ.get("ROLLOUT_THEME_OPEN_SECONDS", defaults.theme_open_seconds)
+            ),
             claude_enabled=os.environ.get("ROLLOUT_CLAUDE_ENABLED", "0") == "1",
             data_dir=Path(os.environ.get("ROLLOUT_DATA_DIR", defaults.data_dir)),
         )

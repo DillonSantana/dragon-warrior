@@ -84,7 +84,7 @@ def test_wake_phrase_wakes_the_emblem(monkeypatch):
         def transcribe(self, audio):
             return "Hey Prime, what's on today?"
 
-    def respond(command, llm, config, state):
+    def respond(command, llm, config, state, theme=None):
         seen.append((state.status, state.caption, command))
 
     monkeypatch.setattr(app_main, "Microphone", Mic)

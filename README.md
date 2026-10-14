@@ -77,6 +77,17 @@ To hear the current voice without talking to RollOut, run `uv run rollout --say 
 
 To convert a recording: `ffmpeg -i input.m4a -ac 1 -ar 24000 -sample_fmt s16 -t 10 voices/me.wav`
 
+## Theme music
+
+RollOut can play a song from the Spotify desktop app, starting at a point you choose. In Spotify, right-click the song, choose Share, then Copy Song Link, and add it to `.env`:
+
+```sh
+ROLLOUT_THEME_TRACK=https://open.spotify.com/track/...
+ROLLOUT_THEME_START=1:23
+```
+
+By default it plays for 20 seconds when RollOut starts, and again while RollOut works out each answer, fading out before it speaks. Set `ROLLOUT_THEME_ON` to `wake` or `open` to keep only one of those. It never interrupts music you're already playing, and it won't open Spotify just for a "Hey Prime". The first time, macOS asks whether RollOut may control Spotify; choose OK.
+
 ## Roadmap
 
 - [x] Phase 0: project setup and CI
