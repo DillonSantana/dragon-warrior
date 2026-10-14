@@ -2,7 +2,7 @@
 
 RollOut is a voice-activated daily assistant that runs entirely on a Mac. Say "Hey Prime" to ask about your schedule, tasks, email and school assignments. Everything runs locally and costs nothing to use: speech recognition, the language model and your data all stay on the machine.
 
-> Status: Phase 2 (hands-free "Hey Prime"). See the [roadmap](#roadmap).
+> Status: Phase 2 done (hands-free "Hey Prime" in the menu bar). See the [roadmap](#roadmap).
 
 ## How it works
 
@@ -46,6 +46,18 @@ uv run ruff check .
 uv run pytest
 ```
 
+## Run it in the background
+
+To have RollOut start every time you log in and wait in the menu bar for "Hey Prime":
+
+```sh
+./scripts/install_login_item.sh
+```
+
+A "Prime" item appears in the menu bar: ● listening, ⋯ thinking, ♪ speaking, ‖ paused. Its menu can pause listening or quit. If it crashes, macOS restarts it. Logs go to `~/Library/Logs/rollout.log`. To remove it, run `./scripts/install_login_item.sh --remove`.
+
+Run `uv run rollout` from Terminal once first so macOS asks for microphone access and the models download. Keep the Ollama app set to open at login too.
+
 ## Voice
 
 `ROLLOUT_TTS_STYLE` picks how RollOut sounds:
@@ -54,6 +66,7 @@ uv run pytest
 | --- | --- | --- |
 | `prime` (default) | a deeper, pitched-down voice with a short echo | none; try `ROLLOUT_TTS_VOICE=Alex` or another voice from `say -v '?'` |
 | `plain` | the macOS `say` voice as is | none |
+| `elevenlabs` | a voice from your ElevenLabs account, such as a licensed character voice | copy `.env.example` to `.env`, then fill in `ELEVENLABS_API_KEY` and `ROLLOUT_ELEVENLABS_VOICE_ID`. Needs internet and uses your ElevenLabs credits; when offline it falls back to `prime` |
 | `custom` | matches a voice from a reference clip | put a 5 to 10 second mono 24 kHz WAV in `voices/`, then set `ROLLOUT_VOICE_CLIP` to its path and `ROLLOUT_VOICE_CLIP_TEXT` to exactly what it says |
 
 Only use clips of a voice you have the right to use, such as your own. The `voices/` folder is git-ignored so clips never reach the public repo. Custom voice generation runs on device with [F5-TTS for MLX](https://github.com/lucasnewman/f5-tts-mlx) and takes a few seconds per reply.
@@ -64,7 +77,7 @@ To convert a recording: `ffmpeg -i input.m4a -ac 1 -ar 24000 -sample_fmt s16 -t 
 
 - [x] Phase 0: project setup and CI
 - [x] Phase 1: push-to-talk voice loop
-- [ ] Phase 2: wake word, menu bar, start at login
+- [x] Phase 2: wake word, menu bar, start at login
 - [ ] Phase 3: agent loop, tasks and memory
 - [ ] Phase 4: Google Calendar and Gmail
 - [ ] Phase 5: D2L assignments

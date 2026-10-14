@@ -4,6 +4,20 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def load_dotenv(path: Path) -> None:
+    """Load KEY=VALUE lines from a git-ignored .env file without overriding real env vars."""
+    if not path.is_file():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("'\""))
+
 
 def _default_data_dir() -> Path:
     return Path.home() / "Library" / "Application Support" / "rollout"
@@ -23,16 +37,22 @@ class Config:
     # macOS `say` voice; None uses the system default. List voices with `say -v '?'`.
     tts_voice: str | None = None
     tts_rate: int = 185
-    # plain, prime (deeper with an echo) or custom (cloned from voice_clip)
+    # plain, prime (deeper with an echo), custom (cloned from voice_clip) or elevenlabs
     tts_style: str = "prime"
     # Custom voice: a 5 to 10 second mono 24 kHz WAV you have the right to use, and its transcript
     voice_clip: Path | None = None
     voice_clip_text: str | None = None
+    # ElevenLabs voice, e.g. a licensed character voice on your account. Keep the key in .env.
+    elevenlabs_api_key: str | None = field(default=None, repr=False)
+    elevenlabs_voice_id: str | None = None
+    elevenlabs_model: str = "eleven_flash_v2_5"
     claude_enabled: bool = False
     data_dir: Path = field(default_factory=_default_data_dir)
 
     @classmethod
     def from_env(cls) -> "Config":
+        load_dotenv(Path.cwd() / ".env")
+        load_dotenv(PROJECT_ROOT / ".env")
         defaults = cls()
         return cls(
             listen_mode=os.environ.get("ROLLOUT_LISTEN_MODE", defaults.listen_mode),
@@ -50,6 +70,9 @@ class Config:
             tts_style=os.environ.get("ROLLOUT_TTS_STYLE", defaults.tts_style),
             voice_clip=Path(clip) if (clip := os.environ.get("ROLLOUT_VOICE_CLIP")) else None,
             voice_clip_text=os.environ.get("ROLLOUT_VOICE_CLIP_TEXT") or None,
+            elevenlabs_api_key=os.environ.get("ELEVENLABS_API_KEY") or None,
+            elevenlabs_voice_id=os.environ.get("ROLLOUT_ELEVENLABS_VOICE_ID") or None,
+            elevenlabs_model=os.environ.get("ROLLOUT_ELEVENLABS_MODEL", defaults.elevenlabs_model),
             claude_enabled=os.environ.get("ROLLOUT_CLAUDE_ENABLED", "0") == "1",
             data_dir=Path(os.environ.get("ROLLOUT_DATA_DIR", defaults.data_dir)),
         )
