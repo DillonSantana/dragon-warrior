@@ -96,9 +96,13 @@ def run_wake_word(
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="rollout", description="RollOut voice assistant")
     parser.add_argument("--menubar", action="store_true", help="run as a menu bar app")
+    parser.add_argument("--say", metavar="TEXT", help="speak TEXT in RollOut's voice and exit")
     args = parser.parse_args(argv)
 
     config = Config.from_env()
+    if args.say:
+        speak(args.say, config)
+        return
     llm = LocalLLM(config.ollama_model, config.ollama_url)
     stt = Transcriber(config.whisper_model)
     print(f"RollOut {__version__} ready, using {config.ollama_model}. Ctrl+C to quit.", flush=True)
