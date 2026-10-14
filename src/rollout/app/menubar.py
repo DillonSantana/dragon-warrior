@@ -9,11 +9,13 @@ import threading
 import traceback
 from collections.abc import Callable
 
+from rollout.config import Config
 from rollout.state import AssistantState
 
 TITLES = {
     "starting": "Prime …",
     "listening": "Prime ●",
+    "awake": "Prime ◉",
     "thinking": "Prime ⋯",
     "speaking": "Prime ♪",
     "paused": "Prime ‖",
@@ -27,8 +29,10 @@ def title_for(state: AssistantState) -> str:
     return TITLES.get(state.status, TITLES["starting"])
 
 
-def run_menubar(loop: Callable[[AssistantState], None]) -> None:
+def run_menubar(loop: Callable[[AssistantState], None], config: Config | None = None) -> None:
     import rumps  # macOS only
+
+    config = config or Config()
 
     state = AssistantState()
 
@@ -61,6 +65,20 @@ def run_menubar(loop: Callable[[AssistantState], None]) -> None:
     @rumps.timer(0.5)
     def refresh(_) -> None:
         app.title = title_for(state)
+
+    if config.overlay:
+        from rollout.app.overlay_mac import Overlay
+
+        emblem = []
+
+        def tick(_) -> None:
+            if not emblem:  # create the window once the app is running
+                emblem.append(Overlay(config.overlay_position, config.overlay_image))
+            emblem[0].tick(state)
+
+        # Kept on the app so the timer isn't garbage collected
+        app.overlay_timer = rumps.Timer(tick, 1 / 30)
+        app.overlay_timer.start()
 
     threading.Thread(target=worker, daemon=True).start()
     app.run()

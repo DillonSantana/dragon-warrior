@@ -31,9 +31,11 @@ def handle_turn(transcript: str, llm: LocalLLM) -> str:
 
 def respond(transcript: str, llm: LocalLLM, config: Config, state: AssistantState) -> None:
     print(f"You: {transcript}", flush=True)
+    state.caption = transcript
     state.status = "thinking"
     reply = handle_turn(transcript, llm)
     print(f"RollOut: {reply}", flush=True)
+    state.caption = reply
     state.status = "speaking"
     speak(reply, config)
 
@@ -75,6 +77,8 @@ def run_wake_word(
             rest = match_wake(wake_stt.transcribe(audio), config.wake_phrases)
             if rest is None:
                 continue
+            state.caption = "Listening…"
+            state.status = "awake"
             if rest:
                 command = command_after_wake(stt.transcribe(audio), config.wake_phrases)
             else:
@@ -101,7 +105,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.menubar:
         from rollout.app.menubar import run_menubar
 
-        run_menubar(lambda state: run_wake_word(config, llm, stt, state))
+        run_menubar(lambda state: run_wake_word(config, llm, stt, state), config)
         return
     try:
         if config.listen_mode == "push":
