@@ -12,6 +12,8 @@ import time
 from collections.abc import Callable
 
 FADE_STEPS = 8
+LAUNCH_WAIT_S = 15
+NOT_ALLOWED = "-1743"  # macOS refused to let RollOut control Spotify
 
 Runner = Callable[[str], str]
 
@@ -31,9 +33,22 @@ def parse_start(text: str) -> float:
 
 
 def osascript(script: str) -> str:
-    result = subprocess.run(
-        ["osascript", "-e", script], capture_output=True, text=True, timeout=10, check=False
-    )
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", script], capture_output=True, text=True, timeout=10, check=False
+        )
+    except subprocess.TimeoutExpired:
+        print("(Theme: Spotify didn't respond in time)", flush=True)
+        return ""
+    if result.returncode != 0:
+        error = result.stderr.strip()
+        hint = ""
+        if NOT_ALLOWED in error:
+            hint = (
+                " Allow it in System Settings > Privacy & Security > Automation: turn on Spotify"
+                " under Terminal (or under uv / python if RollOut runs at login)."
+            )
+        print(f"(Theme: Spotify said: {error}.{hint})", flush=True)
     return result.stdout.strip()
 
 
@@ -49,11 +64,17 @@ class Theme:
     def play(self, launch: bool = False) -> bool:
         """Start the theme. Skips it if Spotify is closed (unless launch) or already playing."""
         if not self.uri:
+            print("(Theme: ROLLOUT_THEME_TRACK isn't a Spotify song link)", flush=True)
             return False
         with self.lock:
-            if not launch and self.run('application "Spotify" is running') != "true":
-                return False
+            if self.run('application "Spotify" is running') != "true":
+                if not launch:
+                    return False
+                if not self._launch():
+                    print("(Theme: couldn't open Spotify)", flush=True)
+                    return False
             if self.run('tell application "Spotify" to player state as string') == "playing":
+                print("(Theme: skipped because Spotify is already playing)", flush=True)
                 return False
             self.volume = self.run('tell application "Spotify" to sound volume as string')
             self.run(
@@ -64,7 +85,18 @@ class Theme:
                 f"end tell"
             )
             self.playing = True
+            print("(Theme: playing)", flush=True)
             return True
+
+    def _launch(self) -> bool:
+        """Open Spotify in the background and wait until it can take commands."""
+        self.run('tell application "Spotify" to launch')
+        deadline = time.monotonic() + LAUNCH_WAIT_S
+        while time.monotonic() < deadline:
+            if self.run('tell application "Spotify" to player state as string'):
+                return True
+            time.sleep(0.5)
+        return False
 
     def stop(self, fade_s: float = 1.0) -> None:
         """Fade the theme out and pause it, then put Spotify's volume back."""

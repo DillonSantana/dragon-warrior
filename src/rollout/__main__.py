@@ -7,6 +7,7 @@ to press Enter to talk.
 
 import argparse
 import subprocess
+import time
 
 from rollout import __version__
 from rollout.app.theme import Theme
@@ -111,11 +112,21 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="rollout", description="RollOut voice assistant")
     parser.add_argument("--menubar", action="store_true", help="run as a menu bar app")
     parser.add_argument("--say", metavar="TEXT", help="speak TEXT in RollOut's voice and exit")
+    parser.add_argument("--theme", action="store_true", help="play the theme song once and exit")
     args = parser.parse_args(argv)
 
     config = Config.from_env()
     if args.say:
         speak(args.say, config)
+        return
+    if args.theme:
+        if not config.theme_track:
+            print("No theme set. Add ROLLOUT_THEME_TRACK to .env.")
+            return
+        theme = Theme(config.theme_track, config.theme_start)
+        if theme.play(launch=True):
+            time.sleep(10)
+            theme.stop()
         return
     llm = LocalLLM(config.ollama_model, config.ollama_url)
     stt = Transcriber(config.whisper_model)
