@@ -9,6 +9,7 @@ import argparse
 import subprocess
 
 from rollout import __version__
+from rollout.app.theme import Theme
 from rollout.brain.local_llm import LocalLLM, OllamaError
 from rollout.config import Config
 from rollout.state import AssistantState
@@ -29,12 +30,22 @@ def handle_turn(transcript: str, llm: LocalLLM) -> str:
         return "I can't reach my local model. Make sure the Ollama app is running."
 
 
-def respond(transcript: str, llm: LocalLLM, config: Config, state: AssistantState) -> None:
+def respond(
+    transcript: str,
+    llm: LocalLLM,
+    config: Config,
+    state: AssistantState,
+    theme: Theme | None = None,
+) -> None:
     print(f"You: {transcript}", flush=True)
     state.caption = transcript
     state.status = "thinking"
+    if theme and config.theme_on in ("wake", "both"):
+        theme.play()
     reply = handle_turn(transcript, llm)
     print(f"RollOut: {reply}", flush=True)
+    if theme:
+        theme.stop()
     state.caption = reply
     state.status = "speaking"
     speak(reply, config)
@@ -63,6 +74,9 @@ def run_wake_word(
 ) -> None:
     state = state or AssistantState()
     wake_stt = Transcriber(config.wake_model)
+    theme = Theme(config.theme_track, config.theme_start) if config.theme_track else None
+    if theme and config.theme_on in ("open", "both"):
+        theme.play_for(config.theme_open_seconds, launch=True)
     with Microphone() as mic:
         print('Say "Hey Prime" followed by your question.', flush=True)
         state.status = "listening"
@@ -88,7 +102,7 @@ def run_wake_word(
                 follow_up = mic.next_utterance(timeout_s=FOLLOW_UP_TIMEOUT_S)
                 command = stt.transcribe(follow_up) if follow_up is not None else ""
             if command.strip():
-                respond(command, llm, config, state)
+                respond(command, llm, config, state, theme)
             state.status = "listening"
             mic.flush()
 
