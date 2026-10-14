@@ -2,7 +2,7 @@
 
 RollOut is a voice-activated daily assistant that runs entirely on a Mac. Say "Hey Prime" to ask about your schedule, tasks, email and school assignments. Everything runs locally and costs nothing to use: speech recognition, the language model and your data all stay on the machine.
 
-> Status: Phase 2 (hands-free "Hey Prime"). See the [roadmap](#roadmap).
+> Status: Phase 2 done (hands-free "Hey Prime" in the menu bar). See the [roadmap](#roadmap).
 
 ## How it works
 
@@ -46,6 +46,18 @@ uv run ruff check .
 uv run pytest
 ```
 
+## Run it in the background
+
+To have RollOut start every time you log in and wait in the menu bar for "Hey Prime":
+
+```sh
+./scripts/install_login_item.sh
+```
+
+A "Prime" item appears in the menu bar: ● listening, ⋯ thinking, ♪ speaking, ‖ paused. Its menu can pause listening or quit. If it crashes, macOS restarts it. Logs go to `~/Library/Logs/rollout.log`. To remove it, run `./scripts/install_login_item.sh --remove`.
+
+Run `uv run rollout` from Terminal once first so macOS asks for microphone access and the models download. Keep the Ollama app set to open at login too.
+
 ## Voice
 
 `ROLLOUT_TTS_STYLE` picks how RollOut sounds:
@@ -65,7 +77,7 @@ To convert a recording: `ffmpeg -i input.m4a -ac 1 -ar 24000 -sample_fmt s16 -t 
 
 - [x] Phase 0: project setup and CI
 - [x] Phase 1: push-to-talk voice loop
-- [ ] Phase 2: wake word, menu bar, start at login
+- [x] Phase 2: wake word, menu bar, start at login
 - [ ] Phase 3: agent loop, tasks and memory
 - [ ] Phase 4: Google Calendar and Gmail
 - [ ] Phase 5: D2L assignments

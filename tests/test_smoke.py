@@ -39,7 +39,7 @@ def test_main_exits_cleanly_on_ctrl_c(monkeypatch, capsys):
 
     monkeypatch.setenv("ROLLOUT_LISTEN_MODE", "push")
     monkeypatch.setattr("builtins.input", interrupt)
-    main()
+    main([])
     assert "RollOut" in capsys.readouterr().out
 
 

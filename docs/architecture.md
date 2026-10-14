@@ -20,3 +20,7 @@ RollOut is a pipeline that runs on the Mac:
 ## Offline
 
 A sync worker (`store/sync.py`) copies calendar and assignment data into SQLite so reads work offline. Changes made offline go to an outbox (`store/outbox.py`) with an id per action, so each is sent exactly once after reconnecting.
+
+## Running in the background
+
+`scripts/install_login_item.sh` installs a launchd agent (`~/Library/LaunchAgents/com.rollout.assistant.plist`) that runs `rollout --menubar` at login and restarts it after a crash. The menu bar app (`app/menubar.py`, rumps) owns the main thread and shows the state from `state.py`; the listening loop runs on a background thread and checks the pause and quit flags between utterances.
