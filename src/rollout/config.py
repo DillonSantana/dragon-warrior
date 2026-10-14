@@ -40,6 +40,11 @@ class Config:
     # Whisper often hears "Hey Prime" as one of these
     wake_phrases: tuple[str, ...] = ("hey prime", "hi prime", "hay prime", "a prime", "hey primes")
     # Small, fast model that checks every utterance for the wake phrase
+    # Saying one of these ends a conversation; "Hey Prime" starts a new one
+    exit_phrases: tuple[str, ...] = ("roll out", "role out", "rollout")
+    # Keep listening for follow-ups after an answer, without repeating "Hey Prime"
+    conversation: bool = True
+    conversation_timeout_s: float = 10.0
     wake_model: str = "mlx-community/whisper-base.en-mlx"
     ollama_model: str = "qwen3:8b"
     ollama_url: str = "http://localhost:11434"
@@ -82,6 +87,15 @@ class Config:
             )
             if os.environ.get("ROLLOUT_WAKE_PHRASES")
             else defaults.wake_phrases,
+            exit_phrases=tuple(
+                p.strip() for p in os.environ["ROLLOUT_EXIT_PHRASES"].split(",") if p.strip()
+            )
+            if os.environ.get("ROLLOUT_EXIT_PHRASES")
+            else defaults.exit_phrases,
+            conversation=os.environ.get("ROLLOUT_CONVERSATION", "1") != "0",
+            conversation_timeout_s=float(
+                os.environ.get("ROLLOUT_CONVERSATION_TIMEOUT", defaults.conversation_timeout_s)
+            ),
             wake_model=os.environ.get("ROLLOUT_WAKE_MODEL", defaults.wake_model),
             ollama_model=os.environ.get("ROLLOUT_OLLAMA_MODEL", defaults.ollama_model),
             ollama_url=os.environ.get("ROLLOUT_OLLAMA_URL", defaults.ollama_url),
