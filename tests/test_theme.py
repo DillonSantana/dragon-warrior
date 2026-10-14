@@ -54,7 +54,45 @@ def test_never_interrupts_music_already_playing():
 def test_does_not_open_spotify_on_wake():
     spotify = FakeSpotify(running="false")
     assert not Theme(TRACK, run=spotify).play()
-    assert Theme(TRACK, run=FakeSpotify(running="false")).play(launch=True)
+    assert not any("launch" in s for s in spotify.scripts)
+
+
+def test_opens_spotify_when_rollout_starts():
+    spotify = FakeSpotify(running="false")
+    assert Theme(TRACK, run=spotify).play(launch=True)
+    assert 'tell application "Spotify" to launch' in spotify.scripts
+
+
+def test_osascript_explains_missing_permission(monkeypatch, capsys):
+    import subprocess
+
+    def refuse(*args, **kwargs):
+        return subprocess.CompletedProcess(
+            args, 1, "", "execution error: Not authorized to send Apple events to Spotify. (-1743)"
+        )
+
+    monkeypatch.setattr(theme_module.subprocess, "run", refuse)
+    assert theme_module.osascript('tell application "Spotify" to pause') == ""
+    assert "Privacy & Security > Automation" in capsys.readouterr().out
+
+
+def test_osascript_survives_a_hung_spotify(monkeypatch):
+    import subprocess
+
+    def hang(*args, **kwargs):
+        raise subprocess.TimeoutExpired("osascript", 10)
+
+    monkeypatch.setattr(theme_module.subprocess, "run", hang)
+    assert theme_module.osascript("anything") == ""
+
+
+def test_theme_command_without_song(monkeypatch, capsys):
+    import rollout.__main__ as app_main
+
+    monkeypatch.delenv("ROLLOUT_THEME_TRACK", raising=False)
+    monkeypatch.setattr(app_main.Config, "from_env", classmethod(lambda cls: Config()))
+    app_main.main(["--theme"])
+    assert "ROLLOUT_THEME_TRACK" in capsys.readouterr().out
 
 
 def test_theme_settings_from_environment(monkeypatch):

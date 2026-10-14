@@ -86,7 +86,7 @@ ROLLOUT_THEME_TRACK=https://open.spotify.com/track/...
 ROLLOUT_THEME_START=1:23
 ```
 
-By default it plays for 20 seconds when RollOut starts, and again while RollOut works out each answer, fading out before it speaks. Set `ROLLOUT_THEME_ON` to `wake` or `open` to keep only one of those. It never interrupts music you're already playing, and it won't open Spotify just for a "Hey Prime". The first time, macOS asks whether RollOut may control Spotify; choose OK.
+By default it plays for 20 seconds when RollOut starts, and again while RollOut works out each answer, fading out before it speaks. Set `ROLLOUT_THEME_ON` to `wake` or `open` to keep only one of those. It never interrupts music you're already playing, and it won't open Spotify just for a "Hey Prime". The first time, macOS asks whether RollOut may control Spotify; choose OK. To test it, run `uv run rollout --theme`; if the song doesn't play, it prints why.
 
 ## Roadmap
 
