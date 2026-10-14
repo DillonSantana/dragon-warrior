@@ -93,3 +93,14 @@ def test_wake_phrase_wakes_the_emblem(monkeypatch):
     app_main.run_wake_word(Config(), llm=None, stt=STT("big"), state=state)
     assert [(status, caption) for status, caption, _ in seen] == [("awake", "Listening…")]
     assert state.status == "listening"
+
+
+def test_insignia_in_project_folder_is_picked_up(monkeypatch, tmp_path):
+    import rollout.config as config_module
+
+    monkeypatch.delenv("ROLLOUT_OVERLAY_IMAGE", raising=False)
+    insignia = tmp_path / "insignia.png"
+    monkeypatch.setattr(config_module, "DEFAULT_OVERLAY_IMAGE", insignia)
+    assert Config.from_env().overlay_image is None
+    insignia.write_bytes(b"png")
+    assert Config.from_env().overlay_image == insignia
