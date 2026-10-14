@@ -58,6 +58,7 @@ def speak(text: str, config: "Config") -> None:
 def _speak_elevenlabs(text: str, config: "Config") -> bool:
     """Speak through ElevenLabs. Returns False if it isn't set up or can't be reached."""
     if not (config.elevenlabs_api_key and config.elevenlabs_voice_id):
+        print("(ElevenLabs needs ELEVENLABS_API_KEY and ROLLOUT_ELEVENLABS_VOICE_ID in .env)")
         return False
     request = urllib.request.Request(
         ELEVENLABS_URL.format(voice_id=config.elevenlabs_voice_id),
@@ -67,6 +68,10 @@ def _speak_elevenlabs(text: str, config: "Config") -> bool:
     try:
         with urllib.request.urlopen(request, timeout=20) as response:
             audio = response.read()
+    except urllib.error.HTTPError as exc:
+        hint = _http_hint(exc.code)
+        print(f"(ElevenLabs refused the request, using the Prime voice: {exc}. {hint})")
+        return False
     except (urllib.error.URLError, TimeoutError) as exc:
         print(f"(ElevenLabs unavailable, using the Prime voice: {exc})")
         return False
@@ -75,6 +80,16 @@ def _speak_elevenlabs(text: str, config: "Config") -> bool:
         mp3.write_bytes(audio)
         subprocess.run(["afplay", str(mp3)], check=False)
     return True
+
+
+def _http_hint(code: int) -> str:
+    if code == 401:
+        return "Check ELEVENLABS_API_KEY and that the key has Text to Speech access."
+    if code == 404:
+        return "Check ROLLOUT_ELEVENLABS_VOICE_ID."
+    if code in (402, 429):
+        return "You may be out of credits or sending too fast."
+    return ""
 
 
 def _say_cmd(voice: str | None, rate: int) -> list[str]:

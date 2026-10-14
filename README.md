@@ -73,6 +73,8 @@ Run `uv run rollout` from Terminal once first so macOS asks for microphone acces
 
 Only use clips of a voice you have the right to use, such as your own. The `voices/` folder is git-ignored so clips never reach the public repo. Custom voice generation runs on device with [F5-TTS for MLX](https://github.com/lucasnewman/f5-tts-mlx) and takes a few seconds per reply.
 
+To hear the current voice without talking to RollOut, run `uv run rollout --say "Roll out."`. If ElevenLabs can't be used, it prints why and speaks in the `prime` voice instead.
+
 To convert a recording: `ffmpeg -i input.m4a -ac 1 -ar 24000 -sample_fmt s16 -t 10 voices/me.wav`
 
 ## Roadmap

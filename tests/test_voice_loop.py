@@ -226,3 +226,28 @@ def test_elevenlabs_without_key_falls_back_to_prime(monkeypatch):
     )
     tts.speak("Hello", Config(tts_style="elevenlabs"))
     assert ran[0][0] == "say" and "-o" in ran[0]
+
+
+def test_say_command_speaks_and_exits(monkeypatch):
+    import rollout.__main__ as app_main
+
+    spoken = []
+    monkeypatch.setattr(app_main, "speak", lambda text, config: spoken.append(text))
+    monkeypatch.setattr(app_main, "LocalLLM", None)  # must not start the assistant
+    app_main.main(["--say", "Roll out."])
+    assert spoken == ["Roll out."]
+
+
+def test_elevenlabs_bad_key_explains_and_falls_back(monkeypatch, capsys):
+    import io
+    import urllib.error
+
+    def refuse(request, timeout):
+        raise urllib.error.HTTPError(request.full_url, 401, "Unauthorized", {}, io.BytesIO())
+
+    played = []
+    monkeypatch.setattr(tts.urllib.request, "urlopen", refuse)
+    monkeypatch.setattr(tts, "_speak_prime", lambda *a: played.append("prime"))
+    tts.speak("Hello", ELEVEN)
+    assert played == ["prime"]
+    assert "Text to Speech access" in capsys.readouterr().out
