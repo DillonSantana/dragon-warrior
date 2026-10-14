@@ -35,7 +35,14 @@ def main() -> None:
             print(f"You: {transcript}")
             reply = handle_turn(transcript, llm)
             print(f"RollOut: {reply}")
-            speak(reply, config.tts_voice, config.tts_rate)
+            speak(
+                reply,
+                config.tts_voice,
+                config.tts_rate,
+                config.tts_style,
+                config.voice_clip,
+                config.voice_clip_text,
+            )
     except (KeyboardInterrupt, EOFError):
         print("\nRollOut out.")
 

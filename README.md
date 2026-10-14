@@ -46,6 +46,20 @@ uv run ruff check .
 uv run pytest
 ```
 
+## Voice
+
+`ROLLOUT_TTS_STYLE` picks how RollOut sounds:
+
+| Style | Sound | Setup |
+| --- | --- | --- |
+| `prime` (default) | a deeper, pitched-down voice with a short echo | none; try `ROLLOUT_TTS_VOICE=Alex` or another voice from `say -v '?'` |
+| `plain` | the macOS `say` voice as is | none |
+| `custom` | matches a voice from a reference clip | put a 5 to 10 second mono 24 kHz WAV in `voices/`, then set `ROLLOUT_VOICE_CLIP` to its path and `ROLLOUT_VOICE_CLIP_TEXT` to exactly what it says |
+
+Only use clips of a voice you have the right to use, such as your own. The `voices/` folder is git-ignored so clips never reach the public repo. Custom voice generation runs on device with [F5-TTS for MLX](https://github.com/lucasnewman/f5-tts-mlx) and takes a few seconds per reply.
+
+To convert a recording: `ffmpeg -i input.m4a -ac 1 -ar 24000 -sample_fmt s16 -t 10 voices/me.wav`
+
 ## Roadmap
 
 - [x] Phase 0: project setup and CI

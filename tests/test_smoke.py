@@ -12,6 +12,7 @@ def test_version_is_set():
 def test_config_defaults_are_free_and_local():
     config = Config()
     assert config.claude_enabled is False
+    assert config.tts_style == "prime"
     assert config.ollama_url.startswith("http://localhost")
 
 

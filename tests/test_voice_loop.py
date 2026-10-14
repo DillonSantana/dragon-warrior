@@ -3,6 +3,7 @@ import json
 import sys
 import types
 import urllib.error
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -107,3 +108,71 @@ def test_speak_skips_empty_text(monkeypatch):
     monkeypatch.setattr(tts.subprocess, "run", lambda cmd, check: ran.append(cmd))
     tts.speak("  ** ")
     assert ran == []
+
+
+def test_prime_effect_lowers_pitch_and_stays_in_range():
+    sr = 22_050
+    t = np.arange(sr) / sr
+    audio = (0.5 * np.sin(2 * np.pi * 200 * t)).astype(np.float32)
+    out = tts.prime_effect(audio, sr)
+    assert len(out) > len(audio)  # resampled slower, so lower pitched
+    assert np.max(np.abs(out)) <= 0.91
+    assert out.dtype == np.float32
+
+
+def test_prime_effect_handles_silence():
+    assert not np.any(tts.prime_effect(np.zeros(100, dtype=np.float32), 22_050))
+
+
+def test_wav_round_trip(tmp_path):
+    audio = np.linspace(-0.5, 0.5, 1000, dtype=np.float32)
+    tts.write_wav(tmp_path / "a.wav", audio, 22_050)
+    back, sr = tts.read_wav(tmp_path / "a.wav")
+    assert sr == 22_050
+    assert np.allclose(back, audio, atol=1e-3)
+
+
+def test_speak_prime_renders_processes_and_plays(monkeypatch):
+    ran = []
+
+    def fake_run(cmd, check):
+        ran.append(cmd)
+        if cmd[0] == "say":
+            out = Path(cmd[cmd.index("-o") + 1])
+            tts.write_wav(out, np.full(2_000, 0.2, dtype=np.float32), 22_050)
+        return types.SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(tts.subprocess, "run", fake_run)
+    tts.speak("Autobots", style="prime", rate=164)
+    say, play = ran
+    assert say[:3] == ["say", "-r", "200"] and say[-1] == "Autobots"
+    assert play[0] == "afplay"
+
+
+def test_speak_custom_uses_clip(monkeypatch, tmp_path):
+    calls = {}
+
+    def fake_generate(**kwargs):
+        calls.update(kwargs)
+
+    module = types.SimpleNamespace(generate=fake_generate)
+    monkeypatch.setitem(sys.modules, "f5_tts_mlx", types.SimpleNamespace(generate=module))
+    monkeypatch.setitem(sys.modules, "f5_tts_mlx.generate", module)
+    clip = tmp_path / "me.wav"
+    tts.speak("Hello", style="custom", clip=clip, clip_text="this is me")
+    assert calls == {
+        "generation_text": "Hello",
+        "ref_audio_path": str(clip),
+        "ref_audio_text": "this is me",
+    }
+
+
+def test_custom_without_clip_falls_back_to_prime(monkeypatch):
+    ran = []
+    monkeypatch.setattr(
+        tts.subprocess,
+        "run",
+        lambda cmd, check: ran.append(cmd) or types.SimpleNamespace(returncode=1),
+    )
+    tts.speak("Hello", style="custom")
+    assert "-o" in ran[0]
