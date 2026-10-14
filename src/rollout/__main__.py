@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="rollout", description="RollOut voice assistant")
     parser.add_argument("--menubar", action="store_true", help="run as a menu bar app")
     parser.add_argument("--say", metavar="TEXT", help="speak TEXT in RollOut's voice and exit")
-    parser.add_argument("--theme", action="store_true", help="play the theme song once and exit")
+    parser.add_argument("--theme", action="store_true", help="play the theme song, then exit")
     args = parser.parse_args(argv)
 
     config = Config.from_env()
@@ -125,7 +125,7 @@ def main(argv: list[str] | None = None) -> None:
             return
         theme = Theme(config.theme_track, config.theme_start)
         if theme.play(launch=True):
-            time.sleep(10)
+            time.sleep(config.theme_open_seconds)
             theme.stop()
         return
     llm = LocalLLM(config.ollama_model, config.ollama_url)

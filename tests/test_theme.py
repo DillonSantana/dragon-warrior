@@ -72,15 +72,18 @@ def test_never_interrupts_music_already_playing():
 
 
 def test_does_not_open_spotify_on_wake():
-    spotify = FakeSpotify(running="false")
-    assert not Theme(TRACK, run=spotify).play()
-    assert not any("launch" in s for s in spotify.scripts)
+    opened = []
+    theme = Theme(TRACK, run=FakeSpotify(running="false"), open_hidden=lambda: opened.append(1))
+    assert not theme.play()
+    assert opened == []
 
 
-def test_opens_spotify_when_rollout_starts():
+def test_opens_spotify_hidden_when_rollout_starts():
     spotify = FakeSpotify(running="false")
-    assert Theme(TRACK, run=spotify).play(launch=True)
-    assert 'tell application "Spotify" to launch' in spotify.scripts
+    opened = []
+    assert Theme(TRACK, run=spotify, open_hidden=lambda: opened.append(True)).play(launch=True)
+    assert opened == [True]
+    assert not any("activate" in s for s in spotify.scripts)
 
 
 def test_osascript_explains_missing_permission(monkeypatch, capsys):
