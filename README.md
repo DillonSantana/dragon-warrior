@@ -54,6 +54,7 @@ uv run pytest
 | --- | --- | --- |
 | `prime` (default) | a deeper, pitched-down voice with a short echo | none; try `ROLLOUT_TTS_VOICE=Alex` or another voice from `say -v '?'` |
 | `plain` | the macOS `say` voice as is | none |
+| `elevenlabs` | a voice from your ElevenLabs account, such as a licensed character voice | copy `.env.example` to `.env`, then fill in `ELEVENLABS_API_KEY` and `ROLLOUT_ELEVENLABS_VOICE_ID`. Needs internet and uses your ElevenLabs credits; when offline it falls back to `prime` |
 | `custom` | matches a voice from a reference clip | put a 5 to 10 second mono 24 kHz WAV in `voices/`, then set `ROLLOUT_VOICE_CLIP` to its path and `ROLLOUT_VOICE_CLIP_TEXT` to exactly what it says |
 
 Only use clips of a voice you have the right to use, such as your own. The `voices/` folder is git-ignored so clips never reach the public repo. Custom voice generation runs on device with [F5-TTS for MLX](https://github.com/lucasnewman/f5-tts-mlx) and takes a few seconds per reply.

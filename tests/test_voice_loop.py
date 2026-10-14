@@ -11,6 +11,7 @@ import pytest
 from rollout.__main__ import handle_turn
 from rollout.brain import local_llm
 from rollout.brain.local_llm import LocalLLM, OllamaError
+from rollout.config import Config
 from rollout.voice import tts
 from rollout.voice.listen import join_chunks
 from rollout.voice.stt import MIN_SAMPLES, Transcriber
@@ -99,14 +100,14 @@ def test_clean_for_speech_strips_markdown():
 def test_speak_calls_say_with_voice_and_rate(monkeypatch):
     ran = []
     monkeypatch.setattr(tts.subprocess, "run", lambda cmd, check: ran.append(cmd))
-    tts.speak("Hello", voice="Daniel", rate=170)
+    tts.speak("Hello", Config(tts_style="plain", tts_voice="Daniel", tts_rate=170))
     assert ran == [["say", "-r", "170", "-v", "Daniel", "Hello"]]
 
 
 def test_speak_skips_empty_text(monkeypatch):
     ran = []
     monkeypatch.setattr(tts.subprocess, "run", lambda cmd, check: ran.append(cmd))
-    tts.speak("  ** ")
+    tts.speak("  ** ", Config())
     assert ran == []
 
 
@@ -143,7 +144,7 @@ def test_speak_prime_renders_processes_and_plays(monkeypatch):
         return types.SimpleNamespace(returncode=0)
 
     monkeypatch.setattr(tts.subprocess, "run", fake_run)
-    tts.speak("Autobots", style="prime", rate=164)
+    tts.speak("Autobots", Config(tts_style="prime", tts_rate=164))
     say, play = ran
     assert say[:3] == ["say", "-r", "200"] and say[-1] == "Autobots"
     assert play[0] == "afplay"
@@ -159,7 +160,7 @@ def test_speak_custom_uses_clip(monkeypatch, tmp_path):
     monkeypatch.setitem(sys.modules, "f5_tts_mlx", types.SimpleNamespace(generate=module))
     monkeypatch.setitem(sys.modules, "f5_tts_mlx.generate", module)
     clip = tmp_path / "me.wav"
-    tts.speak("Hello", style="custom", clip=clip, clip_text="this is me")
+    tts.speak("Hello", Config(tts_style="custom", voice_clip=clip, voice_clip_text="this is me"))
     assert calls == {
         "generation_text": "Hello",
         "ref_audio_path": str(clip),
@@ -174,5 +175,54 @@ def test_custom_without_clip_falls_back_to_prime(monkeypatch):
         "run",
         lambda cmd, check: ran.append(cmd) or types.SimpleNamespace(returncode=1),
     )
-    tts.speak("Hello", style="custom")
+    tts.speak("Hello", Config(tts_style="custom"))
     assert "-o" in ran[0]
+
+
+ELEVEN = Config(tts_style="elevenlabs", elevenlabs_api_key="k", elevenlabs_voice_id="voice123")
+
+
+def test_elevenlabs_fetches_and_plays_mp3(monkeypatch):
+    sent, ran = [], []
+
+    def urlopen(request, timeout):
+        sent.append(request)
+        return io.BytesIO(b"ID3fake-mp3")
+
+    monkeypatch.setattr(tts.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(tts.subprocess, "run", lambda cmd, check: ran.append(cmd))
+    tts.speak("Autobots, roll out", ELEVEN)
+    request = sent[0]
+    assert "/v1/text-to-speech/voice123" in request.full_url
+    assert request.get_header("Xi-api-key") == "k"
+    assert json.loads(request.data) == {
+        "text": "Autobots, roll out",
+        "model_id": "eleven_flash_v2_5",
+    }
+    assert ran[0][0] == "afplay" and ran[0][1].endswith(".mp3")
+
+
+def test_elevenlabs_offline_falls_back_to_prime(monkeypatch):
+    def offline(request, timeout):
+        raise urllib.error.URLError("no internet")
+
+    ran = []
+    monkeypatch.setattr(tts.urllib.request, "urlopen", offline)
+    monkeypatch.setattr(
+        tts.subprocess,
+        "run",
+        lambda cmd, check: ran.append(cmd) or types.SimpleNamespace(returncode=1),
+    )
+    tts.speak("Hello", ELEVEN)
+    assert ran[0][0] == "say" and "-o" in ran[0]
+
+
+def test_elevenlabs_without_key_falls_back_to_prime(monkeypatch):
+    ran = []
+    monkeypatch.setattr(
+        tts.subprocess,
+        "run",
+        lambda cmd, check: ran.append(cmd) or types.SimpleNamespace(returncode=1),
+    )
+    tts.speak("Hello", Config(tts_style="elevenlabs"))
+    assert ran[0][0] == "say" and "-o" in ran[0]

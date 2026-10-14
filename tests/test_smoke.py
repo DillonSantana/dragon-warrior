@@ -41,3 +41,22 @@ def test_main_exits_cleanly_on_ctrl_c(monkeypatch, capsys):
     monkeypatch.setattr("builtins.input", interrupt)
     main()
     assert "RollOut" in capsys.readouterr().out
+
+
+def test_dotenv_fills_missing_values_only(monkeypatch, tmp_path):
+    from rollout.config import load_dotenv
+
+    env = tmp_path / ".env"
+    env.write_text("# comment\nELEVENLABS_API_KEY='abc'\nROLLOUT_TTS_STYLE=elevenlabs\n")
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "")
+    monkeypatch.delenv("ELEVENLABS_API_KEY")
+    monkeypatch.setenv("ROLLOUT_TTS_STYLE", "plain")
+    load_dotenv(env)
+    import os
+
+    assert os.environ["ELEVENLABS_API_KEY"] == "abc"
+    assert os.environ["ROLLOUT_TTS_STYLE"] == "plain"
+
+
+def test_api_key_is_hidden_from_repr():
+    assert "secret" not in repr(Config(elevenlabs_api_key="secret"))

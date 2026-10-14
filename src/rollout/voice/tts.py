@@ -1,18 +1,27 @@
-"""Text to speech: plain macOS `say`, a deeper "prime" style, or a custom cloned voice.
+"""Text to speech in one of four styles.
 
 - plain: the built-in `say` voice as is.
 - prime: `say` rendered to a file, pitched down and given a short echo, then played with `afplay`.
 - custom: F5-TTS on Apple Silicon (f5-tts-mlx), matching a reference clip you have the right
   to use. Clips live in the git-ignored `voices/` folder and never go in the repo.
+- elevenlabs: a voice from your ElevenLabs account, such as a licensed character voice. Needs
+  internet and uses ElevenLabs credits; falls back to prime when it can't be reached.
 """
 
+import json
 import re
 import subprocess
 import tempfile
+import urllib.error
+import urllib.request
 import wave
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from rollout.config import Config
 
 _MARKDOWN = re.compile(r"[*_`#>]+")
 
@@ -26,23 +35,46 @@ def clean_for_speech(text: str) -> str:
     return " ".join(_MARKDOWN.sub("", text).split())
 
 
-def speak(
-    text: str,
-    voice: str | None = None,
-    rate: int = 185,
-    style: str = "plain",
-    clip: Path | None = None,
-    clip_text: str | None = None,
-) -> None:
+ELEVENLABS_URL = (
+    "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}?output_format=mp3_44100_128"
+)
+
+
+def speak(text: str, config: "Config") -> None:
     text = clean_for_speech(text)
     if not text:
         return
-    if style == "custom" and clip and clip_text:
-        _speak_custom(text, clip, clip_text)
-    elif style in ("prime", "custom"):  # custom without a clip falls back to prime
+    style, voice, rate = config.tts_style, config.tts_voice, config.tts_rate
+    if style == "elevenlabs" and _speak_elevenlabs(text, config):
+        return
+    if style == "custom" and config.voice_clip and config.voice_clip_text:
+        _speak_custom(text, config.voice_clip, config.voice_clip_text)
+    elif style in ("prime", "custom", "elevenlabs"):  # fallback when the others can't run
         _speak_prime(text, voice, rate)
     else:
         subprocess.run([*_say_cmd(voice, rate), text], check=False)
+
+
+def _speak_elevenlabs(text: str, config: "Config") -> bool:
+    """Speak through ElevenLabs. Returns False if it isn't set up or can't be reached."""
+    if not (config.elevenlabs_api_key and config.elevenlabs_voice_id):
+        return False
+    request = urllib.request.Request(
+        ELEVENLABS_URL.format(voice_id=config.elevenlabs_voice_id),
+        data=json.dumps({"text": text, "model_id": config.elevenlabs_model}).encode(),
+        headers={"xi-api-key": config.elevenlabs_api_key, "Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            audio = response.read()
+    except (urllib.error.URLError, TimeoutError) as exc:
+        print(f"(ElevenLabs unavailable, using the Prime voice: {exc})")
+        return False
+    with tempfile.TemporaryDirectory() as tmp:
+        mp3 = Path(tmp) / "reply.mp3"
+        mp3.write_bytes(audio)
+        subprocess.run(["afplay", str(mp3)], check=False)
+    return True
 
 
 def _say_cmd(voice: str | None, rate: int) -> list[str]:
