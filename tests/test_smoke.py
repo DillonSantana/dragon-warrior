@@ -25,6 +25,10 @@ def test_config_reads_environment(monkeypatch, tmp_path):
     assert config.data_dir == Path(tmp_path)
 
 
-def test_main_runs(capsys):
+def test_main_exits_cleanly_on_ctrl_c(monkeypatch, capsys):
+    def interrupt(prompt=""):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr("builtins.input", interrupt)
     main()
     assert "RollOut" in capsys.readouterr().out

@@ -11,10 +11,14 @@ def _default_data_dir() -> Path:
 
 @dataclass(frozen=True)
 class Config:
-    # openWakeWord's pretrained model until a custom RollOut wake word is trained (Phase 2)
+    # Wake phrase "Hey Prime" arrives in Phase 2; until then this is openWakeWord's pretrained model
     wake_word: str = "hey_jarvis"
     ollama_model: str = "qwen3:8b"
     ollama_url: str = "http://localhost:11434"
+    whisper_model: str = "mlx-community/whisper-large-v3-turbo"
+    # macOS `say` voice; None uses the system default. List voices with `say -v '?'`.
+    tts_voice: str | None = None
+    tts_rate: int = 185
     claude_enabled: bool = False
     data_dir: Path = field(default_factory=_default_data_dir)
 
@@ -25,6 +29,9 @@ class Config:
             wake_word=os.environ.get("ROLLOUT_WAKE_WORD", defaults.wake_word),
             ollama_model=os.environ.get("ROLLOUT_OLLAMA_MODEL", defaults.ollama_model),
             ollama_url=os.environ.get("ROLLOUT_OLLAMA_URL", defaults.ollama_url),
+            whisper_model=os.environ.get("ROLLOUT_WHISPER_MODEL", defaults.whisper_model),
+            tts_voice=os.environ.get("ROLLOUT_TTS_VOICE") or defaults.tts_voice,
+            tts_rate=int(os.environ.get("ROLLOUT_TTS_RATE", defaults.tts_rate)),
             claude_enabled=os.environ.get("ROLLOUT_CLAUDE_ENABLED", "0") == "1",
             data_dir=Path(os.environ.get("ROLLOUT_DATA_DIR", defaults.data_dir)),
         )

@@ -12,13 +12,9 @@ RollOut: a free, local, voice-activated assistant for macOS on Apple Silicon.
 
 ## Who builds what
 
-Dillon is building these parts himself to learn them. Claude reviews, explains and gives hints, but does not write the implementation unless Dillon asks:
+Claude builds everything; Dillon uses RollOut day to day and reviews pull requests.
 
-- Audio pipeline (`voice/wake.py`, `voice/listen.py`, `voice/stt.py`)
-- Agent loop (`brain/agent.py`)
-- Google Calendar and Gmail MCP server (`servers/google`)
-- D2L iCal connector (`servers/school`)
-- Offline sync and outbox (`store/sync.py`, `store/outbox.py`)
-- Tests and CI for the above
+## Voice
 
-Claude may write scaffolding, glue code, the menu bar app, text to speech and the tasks server.
+- Wake phrase: "Hey Prime" (custom openWakeWord model, Phase 2).
+- A custom cloned voice may be configured locally from a reference clip Dillon supplies. Never commit voice clips, cloned voice models, or anything derived from a real person's voice.

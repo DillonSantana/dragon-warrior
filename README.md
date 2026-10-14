@@ -1,8 +1,8 @@
 # RollOut
 
-RollOut is a voice-activated daily assistant that runs entirely on a Mac. Say the wake word to ask about your schedule, tasks, email and school assignments. Everything runs locally and costs nothing to use: speech recognition, the language model and your data all stay on the machine.
+RollOut is a voice-activated daily assistant that runs entirely on a Mac. Say "Hey Prime" to ask about your schedule, tasks, email and school assignments. Everything runs locally and costs nothing to use: speech recognition, the language model and your data all stay on the machine.
 
-> Status: Phase 0 (project setup). See the [roadmap](#roadmap).
+> Status: Phase 1 (push-to-talk voice loop). See the [roadmap](#roadmap).
 
 ## How it works
 
@@ -35,6 +35,10 @@ ollama pull qwen3:8b
 uv run rollout
 ```
 
+For now RollOut is push-to-talk in the terminal: press Enter, speak, then press Enter again. The first run downloads the Whisper model (about 1.6 GB). macOS will ask for microphone access for your terminal app.
+
+Settings are environment variables, for example `ROLLOUT_OLLAMA_MODEL=qwen3:4b` on a Mac with 8 GB of memory, or `ROLLOUT_TTS_VOICE=Daniel` for a different `say` voice.
+
 Run the checks:
 
 ```sh
@@ -45,7 +49,7 @@ uv run pytest
 ## Roadmap
 
 - [x] Phase 0: project setup and CI
-- [ ] Phase 1: push-to-talk voice loop
+- [x] Phase 1: push-to-talk voice loop
 - [ ] Phase 2: wake word, menu bar, start at login
 - [ ] Phase 3: agent loop, tasks and memory
 - [ ] Phase 4: Google Calendar and Gmail

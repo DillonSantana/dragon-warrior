@@ -5,7 +5,11 @@ description = "RollOut: a free, voice-activated daily assistant that runs on you
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "mlx-whisper>=0.4.3 ; sys_platform == 'darwin'",
+    "numpy>=2.4.6",
+    "sounddevice>=0.5.6",
+]
 
 [project.scripts]
 rollout = "rollout.__main__:main"
